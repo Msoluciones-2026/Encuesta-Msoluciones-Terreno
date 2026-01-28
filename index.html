@@ -527,12 +527,13 @@ function primeraPreguntaSinResponder() {
 const ENCUESTA_KEY = "encuesta_msoluciones_terreno_enviada";
 
 function encuestaYaEnviada() {
-  return localStorage.getItem(ENCUESTA_KEY) === "true";
+  return sessionStorage.getItem("encuesta_enviada") === "true";
 }
 
 function marcarEncuestaEnviada() {
-  localStorage.setItem(ENCUESTA_KEY, "true");
+  sessionStorage.setItem("encuesta_enviada", "true");
 }
+
 
 function bloquearFormulario() {
   // Inputs normales
