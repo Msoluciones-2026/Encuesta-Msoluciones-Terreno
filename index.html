@@ -169,6 +169,65 @@ footer {
   color:#9ca3af;
   margin-top:24px;
 }
+.logo-img {
+  max-width: 320px;
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.nps-labels {
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  color:#9ca3af;
+  margin-top:6px;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .container {
+    padding: 20px;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  input, textarea {
+    font-size: 16px; /* evita zoom en iOS */
+  }
+}
+
+
+.error {
+  border-color: #dc2626 !important;
+  background: #fef2f2;
+}
+.question-error {
+  border-color: #dc2626 !important;
+  background: #fef2f2;
+}
+
+.error-text {
+  color: #dc2626;
+  font-size: 13px;
+  margin-top: 6px;
+  font-weight: 600;
+}
+.success-text {
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 12px;
+}
+.bloqueado {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 </style>
 </head>
 
@@ -177,31 +236,27 @@ footer {
 <div class="container">
 
   <div class="header">
-    <div class="logo"><span>+</span></div>
-    <div>
-      <h1>SERVICIOS Y MANTENCIONES</h1>
-      <h2>MSOLUCIONES</h2>
-    </div>
-  </div>
+  <img src="logo-msoluciones.png" alt="MSoluciones" class="logo-img">
+</div>
 
   <div class="card">
     <h3>Datos del Cliente</h3>
     <div class="grid">
       <div>
-        <label>Fecha</label>
-        <input type="date">
-      </div>
-      <div>
         <label>Empresa / Institución</label>
         <input placeholder="Ej. Clínica Santa María">
       </div>
       <div>
-        <label>Nombre quien califica</label>
+        <label>Nombre</label>
         <input placeholder="Su nombre completo">
       </div>
       <div>
         <label>Cargo</label>
         <input placeholder="Ej. Jefe de Operaciones">
+      </div>
+      <div>
+        <label>Correo electrónico</label>
+        <input type="email" placeholder="correo@ejemplo.com">
       </div>
     </div>
   </div>
@@ -214,29 +269,31 @@ footer {
     <p>¿Cómo calificaría la calidad técnica del mantenimiento realizado?</p>
     <div class="stars" data-q="q1"></div>
   </div>
-
   <div class="question">
-    <h4>#2 Tiempos de Respuesta</h4>
-    <p>¿El servicio se completó dentro de los plazos acordados?</p>
+    <h4>#2 Cumplimiento de Requisitos</h4>
+    <p>¿El servicio cumplió con los requisitos establecidos?</p>
     <div class="stars" data-q="q2"></div>
   </div>
-
   <div class="question">
-    <h4>#3 Personal Técnico</h4>
+    <h4>#3 Entrega del Servicio</h4>
+    <p>¿El servicio se entregó de forma oportuna y puntual?</p>
+    <div class="stars" data-q="q2"></div>
+  </div>
+  <div class="question">
+    <h4>#4 Cumplimiento de Expectativas</h4>
+    <p>¿El servicio cumplió con sus expectativas?</p>
+    <div class="stars" data-q="qX"></div>
+  </div>
+  <div class="question">
+    <h4>#5 Personal Técnico</h4>
     <p>¿Cómo evalúa el profesionalismo y conocimiento del personal?</p>
     <div class="stars" data-q="q3"></div>
   </div>
 
   <div class="question">
-    <h4>#4 Resolución</h4>
-    <p>¿El servicio resolvió efectivamente la falla?</p>
-    <div class="stars" data-q="q4"></div>
-  </div>
-
-  <div class="question">
-    <h4>5. ¿Recomendaría nuestros servicios?</h4>
+    <h4>¿Recomendaría nuestros servicios?</h4>
     <div class="nps" id="nps"></div>
-    <div style="display:flex;justify-content:space-between;font-size:12px;color:#9ca3af;">
+    <div class="nps-labels">
       <span>Poco probable</span>
       <span>Muy probable</span>
     </div>
@@ -247,73 +304,260 @@ footer {
     <textarea rows="4" placeholder="¿Hay algo más que debamos saber para mejorar?"></textarea>
   </div>
 
-  <button class="send" onclick="enviar()">Enviar Encuesta</button>
-  <footer>© 2025 Servicios y Mantenciones MSoluciones</footer>
+  <div id="mensajeError" class="error-text" style="display:none;"></div>
+  <div id="mensajeSuccess" class="success-text" style="display:none;"></div>
+
+  <button class="send" id="btnEnviar" onclick="enviar()">
+  Enviar Encuesta
+  </button>
+
+  <footer>© 2026 SERVICIO Y MANTENCIONES MSOLUCIONES LTDA</footer>
 
 </div>
 
 <script>
-// ⭐ Estrellas
 document.querySelectorAll('.stars').forEach(block => {
   for (let i = 1; i <= 5; i++) {
     const s = document.createElement('span');
     s.innerHTML = '★';
     s.onclick = () => {
+      if (encuestaYaEnviada()) return;
+    
       [...block.children].forEach((c, idx) =>
         c.classList.toggle('active', idx < i)
       );
+      block.closest('.question')?.classList.remove('question-error');
     };
     block.appendChild(s);
   }
 });
 
-// 🔢 NPS
 const nps = document.getElementById('nps');
 for (let i = 1; i <= 10; i++) {
   const b = document.createElement('button');
   b.textContent = i;
   b.onclick = () => {
+    if (encuestaYaEnviada()) return;
+  
     [...nps.children].forEach(c => c.classList.remove('active'));
     b.classList.add('active');
   };
+
   nps.appendChild(b);
 }
 
-// 📤 Envío a Google Sheets
+function limpiarErrores() {
+  document.querySelectorAll('.error').forEach(e =>
+    e.classList.remove('error')
+  );
+
+  const err = document.getElementById("mensajeError");
+  const ok = document.getElementById("mensajeSuccess");
+
+  err.style.display = "none";
+  err.textContent = "";
+
+  ok.style.display = "none";
+  ok.textContent = "";
+}
+
+function mostrarError(texto, elemento) {
+  const msg = document.getElementById("mensajeError");
+  msg.textContent = texto;
+  msg.style.display = "block";
+
+  if (elemento) {
+    elemento.classList.add("error");
+    elemento.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+}
+
+function mostrarSuccess(texto) {
+  const msg = document.getElementById("mensajeSuccess");
+  msg.textContent = texto;
+  msg.style.display = "block";
+}
+
+function cancelarEnvio() {
+  const btn = document.getElementById("btnEnviar");
+  btn.disabled = false;
+  btn.textContent = "Enviar Encuesta";
+}
+
 async function enviar() {
+  limpiarErrores();
+  const fechaActual = new Date().toISOString().split('T')[0];
+  const btn = document.getElementById("btnEnviar");
+
+
+  const inputsFormulario = document.querySelectorAll('input');
+  const textarea = document.querySelector('textarea');
 
   const data = {
-    fecha: document.querySelector('input[type="date"]').value,
-    empresa: document.querySelectorAll('input')[1].value,
-    nombre: document.querySelectorAll('input')[2].value,
-    cargo: document.querySelectorAll('input')[3].value,
-    q1: getStars(0),
-    q2: getStars(1),
-    q3: getStars(2),
-    q4: getStars(3),
-    nps: document.querySelector('.nps .active')?.textContent || '',
-    comentarios: document.querySelector('textarea').value
-  };
-  if (!data.empresa || !data.nombre) {
-    alert("Por favor complete los datos del cliente");
-    return;
-  }
-  await fetch("https://script.google.com/macros/s/AKfycbx-nK-58lqnIydtZdHCGoKsLb2kqeHqdTl6rH5xVaUB6HCFHSb9q7cIYohdVCTXWDZO/exec", {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
+    fecha: fechaActual,
+    empresa: inputsFormulario[0].value,
+    nombre: inputsFormulario[1].value,
+    cargo: inputsFormulario[2].value,
+    correo: inputsFormulario[3].value,
 
-  alert("Gracias por responder");
+
+    q1: getStars(0), // Calidad
+    q2: getStars(1), // Requisitos
+    q3: getStars(2), // Entrega
+    q4: getStars(3), // Expectativas
+    q5: getStars(4), // Personal
+
+    nps: document.querySelector('.nps .active')?.textContent || '',
+    comentarios: textarea.value
+  };
+
+
+if (!data.empresa) {
+  mostrarError("Debe indicar la empresa", inputsFormulario[0]);
+  cancelarEnvio();
+  return;
+
 }
 
 
-// ⭐ contar estrellas
+if (!data.nombre) {
+  mostrarError("Debe indicar su nombre", inputsFormulario[1]);
+  cancelarEnvio();
+  return;
+}
+
+if (!data.cargo) {
+  mostrarError("Debe indicar su cargo", inputsFormulario[2]);
+  cancelarEnvio();
+  return;
+}
+
+if (!data.correo) {
+  mostrarError("Debe indicar un correo electrónico", inputsFormulario[3]);
+  cancelarEnvio();
+  return;
+}
+
+if (!data.correo.includes("@")) {
+  mostrarError("Debe indicar un correo electrónico válido", inputsFormulario[3]);
+  cancelarEnvio();
+  return;
+
+}
+
+
+if (!todasLasEstrellasRespondidas()) {
+  const pregunta = primeraPreguntaSinResponder();
+  if (pregunta) {
+    pregunta.classList.add("question-error");
+    pregunta.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  mostrarError("Debe responder todas las preguntas de evaluación");
+  cancelarEnvio();
+  return;
+}
+
+
+if (!data.nps) {
+  mostrarError(
+    "Debe indicar qué tan probable es que nos recomiende",
+    document.getElementById("nps")
+  );
+  cancelarEnvio();
+  return;
+}
+
+
+
+  btn.disabled = true;
+  btn.textContent = "Enviando…";
+  try {
+    await fetch("https://script.google.com/macros/s/AKfycby8hqWGbjyRWmPCC5-j1DdAG2U9DEUfTQDwbhRz8L0Waq51iWEJAA4E5Ml9VsW1FKTl6A/exec", {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    marcarEncuestaEnviada();
+    bloquearFormulario();
+
+
+  } catch (e) {
+    mostrarError("Error al enviar, intente nuevamente");
+    btn.disabled = false;
+    btn.textContent = "Enviar Encuesta";
+  }
+}
+const TOTAL_PREGUNTAS = 5;
 function getStars(i) {
   return [...document.querySelectorAll('.stars')[i].children]
     .filter(s => s.classList.contains('active')).length;
 }
+function todasLasEstrellasRespondidas() {
+  for (let i = 0; i < TOTAL_PREGUNTAS; i++) {
+    if (getStars(i) === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+const inputsFormulario = document.querySelectorAll('input');
+
+inputsFormulario.forEach(input => {
+  input.addEventListener("input", () => {
+    if (input.value.trim() !== "") {
+      input.classList.remove("error");
+      document.getElementById("mensajeError").style.display = "none";
+    }
+  });
+});
+
+function primeraPreguntaSinResponder() {
+  const preguntas = document.querySelectorAll('.question');
+
+  for (let i = 0; i < TOTAL_PREGUNTAS; i++) {
+    const estrellas = preguntas[i].querySelectorAll('.stars span.active');
+    if (estrellas.length === 0) {
+      return preguntas[i];
+    }
+  }
+  return null;
+}
+const ENCUESTA_KEY = "encuesta_msoluciones_terreno_enviada";
+
+function encuestaYaEnviada() {
+  return localStorage.getItem(ENCUESTA_KEY) === "true";
+}
+
+function marcarEncuestaEnviada() {
+  localStorage.setItem(ENCUESTA_KEY, "true");
+}
+
+function bloquearFormulario() {
+  // Inputs normales
+  document.querySelectorAll("input, textarea")
+    .forEach(el => el.disabled = true);
+
+  // Bloquear estrellas
+  document.querySelectorAll(".stars")
+    .forEach(el => el.classList.add("bloqueado"));
+
+  // Bloquear NPS
+  document.querySelectorAll(".nps")
+    .forEach(el => el.classList.add("bloqueado"));
+
+  // Ocultar botón enviar
+  document.getElementById("btnEnviar").style.display = "none";
+
+  mostrarSuccess("Gracias, ya registramos su respuesta.");
+}
+
+if (encuestaYaEnviada()) {
+  bloquearFormulario();
+}
+
+
 </script>
 
 
